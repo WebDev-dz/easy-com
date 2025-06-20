@@ -46,7 +46,9 @@ export interface ImageValidationResult {
 export interface UseImageUploaderProps {
   maxImages?: number;
   maxImageSize?: number;
+  allowedImageExtensions?: string[];
   allowedImageTypes?: string[];
+  allowedImageMimeTypes?: string[];
 }
 
 export interface UseImageUploaderResult {
@@ -65,6 +67,7 @@ export interface UseImageUploaderResult {
 const DEFAULT_MAX_IMAGES = 5;
 const DEFAULT_MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const DEFAULT_ALLOWED_IMAGE_EXTENSIONS = ["jpg", "jpeg", "png"];
+const DEFAULT_ALLOWED_IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/jpg"];
 
 export const extenstionToContentType = (extension: string) => {
   switch (extension) {
@@ -77,25 +80,6 @@ export const extenstionToContentType = (extension: string) => {
       return "image/jpeg";
   }
 };
-
-// Helper function to get file info from URI (mobile only)
-const getFileInfoFromUri = async (
-  uri: string
-): Promise<{ size?: number; type?: string }> => {
-  try {
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    return {
-      size: blob.size,
-      type: blob.type,
-    };
-  } catch (error) {
-    console.warn("Could not get file info from URI:", error);
-    return {};
-  }
-};
-
-// Helper function to create File from URI (for web compatibility)
 
 // Cross-platform alert function
 const showAlert = (
@@ -159,11 +143,102 @@ const requestPermissions = async (): Promise<boolean> => {
   }
 };
 
+// Process mobile assets (ImagePickerAsset[])
+const processMobileAssets = async (
+  assets: ImagePickerAsset[],
+  currentImages: ImagePickerAsset[],
+  maxImages: number,
+  validateImage: (image: any) => ImageValidationResult
+): Promise<ImagePickerAsset[]> => {
+  const newMobileAssets: ImagePickerAsset[] = [];
+
+  for (const asset of assets) {
+    if (currentImages.length + newMobileAssets.length >= maxImages) {
+      showAlert(
+        "Limit Reached",
+        `You can upload maximum ${maxImages} images`
+      );
+      break;
+    }
+
+    let fileSize = asset.fileSize;
+    let name = asset.fileName || `image_${Date.now()}.jpg`;
+    let extension = name.split('.').pop()?.toLowerCase() || 'jpg';
+    const contentType = extenstionToContentType(extension);
+    console.log({asset})
+    const imageData = {
+      uri: asset.uri,
+      type: asset.mimeType || contentType,
+      name: name,
+      size: fileSize,
+      };
+
+      console.log("pickedImageFromGallery", imageData);
+
+    const validationResult = validateImage(imageData);
+    if (!validationResult.isValid) {
+      showAlert("Invalid Image", validationResult.error!);
+      continue;
+    }
+
+    newMobileAssets.push(asset);
+  }
+
+  return newMobileAssets;
+};
+
+// Process web files (File[])
+const processWebFiles = async (
+  assets: ImagePickerAsset[],
+  currentImages: File[],
+  maxImages: number,
+  validateImage: (image: any) => ImageValidationResult
+): Promise<File[]> => {
+  const newWebFiles: File[] = [];
+
+  for (const asset of assets) {
+    if (currentImages.length + newWebFiles.length >= maxImages) {
+      showAlert(
+        "Limit Reached",
+        `You can upload maximum ${maxImages} images`
+      );
+      break;
+    }
+
+    if (!asset.file) {
+      console.warn("Web asset missing file property");
+      continue;
+    }
+
+    let name = asset.fileName || `image_${Date.now()}.jpg`;
+    let extension = name.split('.').pop()?.toLowerCase() || 'jpg';
+    const contentType = extenstionToContentType(extension);
+
+    const imageData = {
+      uri: asset.uri,
+      type: asset.mimeType || contentType,
+      name: name,
+      size: asset.fileSize,
+    };
+
+    const validationResult = validateImage(imageData);
+    if (!validationResult.isValid) {
+      showAlert("Invalid Image", validationResult.error!);
+      continue;
+    }
+
+    newWebFiles.push(asset.file);
+  }
+
+  return newWebFiles;
+};
+
 // Custom hook
 export const useImageUploader = ({
   maxImages = DEFAULT_MAX_IMAGES,
   maxImageSize = DEFAULT_MAX_IMAGE_SIZE,
-  allowedImageTypes = DEFAULT_ALLOWED_IMAGE_EXTENSIONS,
+  allowedImageExtensions = DEFAULT_ALLOWED_IMAGE_EXTENSIONS,
+  allowedImageTypes = DEFAULT_ALLOWED_IMAGE_MIME_TYPES,
 }: UseImageUploaderProps = {}): UseImageUploaderResult => {
   const [productImages, setProductImages] = useState<File[] | ImagePickerAsset[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -175,12 +250,23 @@ export const useImageUploader = ({
       name: string;
       uri: string;
       size?: number;
+      type: string;
     }): ImageValidationResult => {
       if (image.size && image.size > maxImageSize) {
         return { isValid: false, error: "Image size must be less than 5MB" };
       }
-      const imageType = image.name?.split(".").pop()?.toLowerCase();
-      if (imageType && !allowedImageTypes.includes(imageType)) {
+      const imageExtension = image.name?.split(".").pop()?.toLowerCase();
+      if (imageExtension && !allowedImageExtensions.includes(imageExtension)) {
+        console.log("Not allowed extension", imageExtension);
+        return {
+          isValid: false,
+          error: "Only JPEG and PNG images are allowed",
+        };
+      }
+      const imageMimeType = image.type;
+      console.log({allowedImageTypes})
+      if (imageMimeType && !allowedImageTypes.includes(imageMimeType)) {
+        console.log("Not allowed mime type", imageMimeType);
         return {
           isValid: false,
           error: "Only JPEG and PNG images are allowed",
@@ -195,65 +281,38 @@ export const useImageUploader = ({
     async (assets: ImagePicker.ImagePickerAsset[]) => {
       setIsUploading(true);
       setErrors(null);
-      // We'll collect only File or ImagePickerAsset depending on platform
-      const newProductImages: File[] | ImagePickerAsset[] = [];
+
       try {
-        for (const asset of assets) {
-          if (productImages.length + newProductImages.length >= maxImages) {
-            showAlert(
-              "Limit Reached",
-              `You can upload maximum ${maxImages} images`
-            );
-            break;
-          }
+        let newImages: File[] | ImagePickerAsset[] = [];
 
-          let fileSize = asset.fileSize;
-          let name = asset.fileName || `image_${Date.now()}.jpg`;
-          let mimeType = asset.type || "image/jpeg";
-          let extension = name.split('.').pop()?.toLowerCase() || 'jpg';
-          const contentType = extenstionToContentType(extension);
-
-          if (Platform.OS !== "web" && !fileSize) {
-            const fileInfo = await getFileInfoFromUri(asset.uri);
-            fileSize = fileInfo.size;
-            mimeType = fileInfo.type || mimeType;
-          }
-
-          const imageData = {
-            uri: asset.uri,
-            type: contentType,
-            name: name,
-            size: fileSize,
-          };
-
-          const validationResult = validateImage(imageData);
-          if (!validationResult.isValid) {
-            showAlert("Invalid Image", validationResult.error!);
-            continue;
-          }
-
-          // Only add File or ImagePickerAsset to productImages
-          if (Platform.OS === "web" && asset.file) {
-            (newProductImages as File[]).push(asset.file);
-          } else if (Platform.OS !== "web") {
-            (newProductImages as ImagePickerAsset[]).push(asset);
-          }
+        if (Platform.OS === "web") {
+          // Process web files
+          newImages = await processWebFiles(
+            assets,
+            productImages as File[],
+            maxImages,
+            validateImage
+          );
+        } else {
+          // Process mobile assets
+          newImages = await processMobileAssets(
+            assets,
+            productImages as ImagePickerAsset[],
+            maxImages,
+            validateImage
+          );
         }
 
-        if (newProductImages.length > 0) {
+        if (newImages.length > 0) {
           setProductImages((prev) => {
             if (prev.length > 0) {
               if (prev[0] instanceof File) {
-                return [...(prev as File[]), ...((newProductImages as File[]))];
+                return [...(prev as File[]), ...(newImages as File[])];
               } else {
-                return [...(prev as ImagePickerAsset[]), ...((newProductImages as ImagePickerAsset[]))];
+                return [...(prev as ImagePickerAsset[]), ...(newImages as ImagePickerAsset[])];
               }
             } else {
-              if (Platform.OS === "web") {
-                return newProductImages as File[];
-              } else {
-                return newProductImages as ImagePickerAsset[];
-              }
+              return newImages;
             }
           });
         }
@@ -265,7 +324,7 @@ export const useImageUploader = ({
         setIsUploading(false);
       }
     },
-    [productImages.length, maxImages, validateImage]
+    [productImages, maxImages, validateImage]
   );
 
   // Handle image selection from gallery
@@ -354,55 +413,89 @@ export const useImageUploader = ({
       });
 
       if (!result.canceled && result.assets) {
-        const newProductImages: File[] | ImagePickerAsset[] = [];
-        for (const asset of result.assets) {
-          if (productImages.length + newProductImages.length >= maxImages) {
-            showAlert(
-              "Limit Reached",
-              `You can upload maximum ${maxImages} images`
-            );
-            break;
+        let newImages: File[] | ImagePickerAsset[] = [];
+
+        if (Platform.OS === "web") {
+          // Process web files from DocumentPicker
+          const webFiles: File[] = [];
+          for (const asset of result.assets) {
+            if (productImages.length + webFiles.length >= maxImages) {
+              showAlert(
+                "Limit Reached",
+                `You can upload maximum ${maxImages} images`
+              );
+              break;
+            }
+
+            if (!asset.file) {
+              console.warn("Document picker asset missing file property");
+              continue;
+            }
+
+            let name = asset.name || `image_${Date.now()}.jpg`;
+            let extension = name.split('.').pop()?.toLowerCase() || 'jpg';
+            const contentType = extenstionToContentType(extension);
+
+            const imageData = {
+              uri: asset.uri,
+              type: contentType,
+              name: name,
+              size: asset.size,
+            };
+
+            const validationResult = validateImage(imageData);
+            if (!validationResult.isValid) {
+              showAlert("Invalid Image", validationResult.error!);
+              continue;
+            }
+
+            webFiles.push(asset.file);
           }
+          newImages = webFiles;
+        } else {
+          // Process mobile assets from DocumentPicker
+          const mobileAssets: ImagePickerAsset[] = [];
+          for (const asset of result.assets) {
+            if (productImages.length + mobileAssets.length >= maxImages) {
+              showAlert(
+                "Limit Reached",
+                `You can upload maximum ${maxImages} images`
+              );
+              break;
+            }
 
-          let name = asset.name || `image_${Date.now()}.jpg`;
-          let mimeType = asset.mimeType || "image/jpeg";
-          let extension = name.split('.').pop()?.toLowerCase() || 'jpg';
-          const contentType = extenstionToContentType(extension);
+            let name = asset.name || `image_${Date.now()}.jpg`;
+            let extension = name.split('.').pop()?.toLowerCase() || 'jpg';
+            const contentType = extenstionToContentType(extension);
 
-          const imageData = {
-            uri: asset.uri,
-            type: contentType,
-            name: name,
-            size: asset.size,
-          };
+            const imageData = {
+              uri: asset.uri,
+              type: contentType,
+              name: name,
+              size: asset.size,
+            };
 
-          const validationResult = validateImage(imageData);
-          if (!validationResult.isValid) {
-            showAlert("Invalid Image", validationResult.error!);
-            continue;
+            const validationResult = validateImage(imageData);
+            if (!validationResult.isValid) {
+              showAlert("Invalid Image", validationResult.error!);
+              continue;
+            }
+
+            mobileAssets.push(asset as any);
           }
-
-          if (Platform.OS === "web" && asset.file) {
-            (newProductImages as File[]).push(asset.file);
-          } else if (Platform.OS !== "web") {
-            (newProductImages as ImagePickerAsset[]).push(asset as any);
-          }
+          newImages = mobileAssets;
         }
 
-        if (newProductImages.length > 0) {
+        if (newImages.length > 0) {
           setProductImages((prev) => {
             if (prev.length > 0) {
               if (prev[0] instanceof File) {
-                return [...(prev as File[]), ...((newProductImages as File[]))];
+                return [...(prev as File[]), ...(newImages as File[])];
               } else {
-                return [...(prev as ImagePickerAsset[]), ...((newProductImages as ImagePickerAsset[]))];
+                return [...(prev as ImagePickerAsset[]), ...(newImages as ImagePickerAsset[])];
               }
             } else {
-              if (Platform.OS === "web") {
-                return newProductImages as File[];
-              } else {
-                return newProductImages as ImagePickerAsset[];
-              }
+              return newImages;
             }
           });
           setErrors(null);

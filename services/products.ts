@@ -10,6 +10,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 
 import  {api, getAuthHeaders } from './api';
+import { Platform } from 'react-native';
+import { ImagePickerAsset } from 'expo-image-picker';
 
 
 const productsService = {
@@ -69,6 +71,7 @@ const productsService = {
     createProduct: async (data: CreateProductRequest): Promise<Product> => {
         const formData = new FormData();
         console.log('Creating product with data:', data);
+        
         // Append required fields
         formData.append('supplier_id', data.supplier_id.toString());
         formData.append('name', data.name);
@@ -76,25 +79,44 @@ const productsService = {
         formData.append('quantity', data.quantity.toString());
         formData.append('minimum_quantity', data.minimum_quantity.toString());
         formData.append('visibility', data.visibility);
+        
         // Append optional fields if they exist
         if (data.description) formData.append('description', data.description);
         if (data.category_id) formData.append('category_id', data.category_id.toString());
         
         // Append pictures if they exist
-        if (data.pictures) {
-            data.pictures.forEach((picture, index) => {
-                 console.log(`Appending picture ${index}:`, picture);
-                // @ts-ignore
-                formData.append(`pictures[${index}]`, picture);
-            });
+        if (data.pictures && data.pictures.length > 0) {
+            for (let index = 0; index < data.pictures.length; index++) {
+                const picture = data.pictures[index];
+                
+                if (Platform.OS === 'web') {
+                    // For web, picture should be a File object
+                    formData.append(`pictures[${index}]`, picture as File);
+                } else {
+                    // For mobile, we need to format the ImagePickerAsset properly
+                    const imagePickerAsset = picture as ImagePickerAsset;
+                    
+                    // Create the proper file object structure for React Native
+                    const fileObject = {
+                        uri: imagePickerAsset.uri,
+                        type: imagePickerAsset.mimeType || 'image/jpeg',
+                        name: imagePickerAsset.fileName || `image_${index}.jpg`,
+                    } as any;
+                    
+                    console.log(`Appending image ${index}:`, fileObject);
+                    formData.append(`pictures[${index}]`, fileObject);
+                }
+            }
         }
-
-        const response = await api.post<ProductResponse>(`/products`, data, {
+        
+        // Important: Don't pass the original data object, pass formData directly
+        const response = await api.post<ProductResponse>(`/products`, formData, {
             headers: {
                 ...await getAuthHeaders(),
                 'Content-Type': 'multipart/form-data',
             },
         });
+        
         return response.data.data as Product;
     },
 

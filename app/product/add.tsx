@@ -55,7 +55,6 @@ export default function AddProductScreen() {
   } = useImageUploader({
     maxImages: 5,
     maxImageSize: 5 * 1024 * 1024, // 5MB
-    allowedImageTypes: ['jpg', 'jpeg', 'png'],
   });
 
   // Form state
@@ -195,7 +194,6 @@ export default function AddProductScreen() {
         description: '',
       });
       setErrors({});
-      alertService('Success', 'Product added successfully!');
       router.back();
     } catch (error: any) {
       console.error('Submit error:', error);

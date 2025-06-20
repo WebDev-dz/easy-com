@@ -9,6 +9,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -104,7 +105,9 @@ export default function StoreProductsScreen() {
         </View>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesBar} contentContainerStyle={styles.categoriesContent}>
+      <ScrollView refreshControl={
+        <RefreshControl refreshing={isPending} onRefresh={() => getSupplierProducts(Number(supplierId))} />
+      } horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesBar} contentContainerStyle={styles.categoriesContent}>
         {categories.map((category) => (
           <TouchableOpacity
             key={category}
