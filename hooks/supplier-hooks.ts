@@ -21,6 +21,7 @@ export const useSuppliers = () => {
     return useQuery({
         queryKey: supplierKeys.lists(),
         queryFn: suppliersService.getAllSuppliers,
+        staleTime: 1000 * 60 * 5, // 5 minutes
     });
 };
 
@@ -105,4 +106,4 @@ export const useDeleteSupplier = () => {
             toastAlert.error('Failed to delete supplier: ' + error.message);
         }
     });
-}; 
+};
