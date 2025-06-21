@@ -72,7 +72,7 @@ export const cartService = {
         const config: AxiosRequestConfig = {
             data,
         };
-        const response = await api.delete<RemoveFromCartResponse>(`/cart/remove/${productId}`, config);
+        const response = await api.delete<RemoveFromCartResponse>(`orders/cart/remove/${productId}?order_id=${data?.order_id}`, config);
         return response.data;
     },
 

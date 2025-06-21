@@ -9,49 +9,50 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, AlertTriangle } from 'lucide-react-native';
+import { ArrowLeft, AlertTriangle, Package, Clock, CircleCheck as CheckCircle, Truck, ShoppingBag } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useGetRecievedSupplierOrders } from '@/hooks/supplier-order-hooks';
-import { OrdersGrid } from '@/components/orders-grid';
 import { useSupplier } from '@/hooks/supplier-hooks';
+import { OrderStatus } from '@/services/supplierOrders';
+import { Order } from '@/types/orders';
+import { SupplierOrderCard } from '@/components/supplier-order';
+
+const statusFilters: { key: OrderStatus | 'all'; label: string }[] = [
+  { key: 'all', label: 'All Orders' },
+  { key: 'pending', label: 'Pending' },
+  { key: 'processing', label: 'In Progress' },
+  { key: 'delivered', label: 'Delivered' },
+  // { key: 'cancelled', label: 'Cancelled' },
+];
 
 export default function StoreOrdersScreen() {
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | 'all'>('all');
   const { user } = useAuth();
   const { storeId } = useLocalSearchParams();
   const { data: store, isPending: isStoreLoading } = useSupplier(Number(storeId) || 0);
   const { data: orders = [], isPending, error, mutate: getSupplierOrders } = useGetRecievedSupplierOrders();
 
-
-
-  useEffect(() => {
+  const handleStatusUpdate = () => {
     if (user && store) {
       if (store?.user_id === user.id) {
         getSupplierOrders(store.id);
       }
     }
+  };
+
+  useEffect(() => {
+    handleStatusUpdate();
   }, [user, store]);
 
-  const statusFilters = [
-    { key: 'all', label: 'All Orders' },
-    { key: 'pending', label: 'Pending' },
-    { key: 'confirmed', label: 'Processing' },
-    { key: 'delivered', label: 'Delivered' },
-  ];
-
-  const filteredOrders = selectedStatus === 'all' 
+  const filteredOrders: Order[] = selectedStatus === 'all' 
     ? (orders || [])
-    : (orders || []).filter(order =>  order.status == selectedStatus);
+    : (orders || []).filter((order: Order) =>  order.status == selectedStatus);
 
-  
-
-
-  if (isStoreLoading || isPending) {
+  if (isStoreLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8B5CF6" />
-          <Text style={styles.loadingText}>Loading...</Text>
         </View>
       </SafeAreaView>
     );
@@ -89,15 +90,13 @@ export default function StoreOrdersScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#1E293B" />
+          <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.title}>Orders Received</Text>
-          <Text style={styles.subtitle}>Manage your store orders</Text>
-        </View>
+        <Text style={styles.title}>Orders Received</Text>
+        <View style={styles.placeholder} />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersContainer}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersContainer} contentContainerStyle={styles.filtersContent}>
         {statusFilters.map((filter) => (
           <TouchableOpacity
             key={filter.key}
@@ -119,14 +118,43 @@ export default function StoreOrdersScreen() {
         ))}
       </ScrollView>
 
-      <View style={styles.ordersContainer}>
-        <OrdersGrid
-          isPending={isPending}
-          error={error}
-          orders={filteredOrders}
-          onStatusUpdate={getSupplierOrders}
-        />
-      </View>
+      <ScrollView style={styles.ordersContainer}>
+        {isPending ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#2563EB" />
+            <Text style={styles.loadingText}>Loading orders...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <AlertTriangle size={48} color="#EF4444" />
+            <Text style={styles.errorText}>Failed to load orders</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={handleStatusUpdate}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : filteredOrders.length > 0 ? (
+          filteredOrders?.map((order) => (
+            <SupplierOrderCard
+              key={order.id}
+              // @ts-ignore
+              order={order}
+              currentSupplierId={store.id}
+              onStatusUpdate={handleStatusUpdate}
+              small={true}
+            />
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <ShoppingBag size={48} color="#9CA3AF" />
+            <Text style={styles.emptyTitle}>No Orders Found</Text>
+            <Text style={styles.emptyDescription}>
+              {selectedStatus === 'all' 
+                ? "You haven't received any orders yet."
+                : `You don't have any ${selectedStatus} orders.`}
+            </Text>
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -203,6 +231,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9',
     flexGrow: 0,
   },
+  filtersContent: {
+    paddingHorizontal: 0,
+  },
   filterChip: {
     backgroundColor: '#F1F5F9',
     borderRadius: 20,
@@ -224,9 +255,6 @@ const styles = StyleSheet.create({
   ordersContainer: {
     flex: 1,
     padding: 24,
-  },
-  ordersGrid: {
-    flex: 1,
   },
   emptyState: {
     flex: 1,
@@ -254,6 +282,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
     textAlign: 'center',
     paddingHorizontal: 32,
+    lineHeight: 24,
   },
   emptyStateText: {
     fontSize: 18,
@@ -290,5 +319,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '500',
+  },
+  placeholder: {
+    width: 32,
   },
 });

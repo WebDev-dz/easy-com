@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Package, AlertCircle, RefreshCcw } from 'lucide-react-native';
 import { ProductCard } from './product-card'; // Adjust path as needed
-import { Product } from '@/services/types'; // Adjust path as needed
+import { Product, Supplier } from '@/services/types'; // Adjust path as needed
 import { useAddToCart } from '@/hooks/cart-hooks'; // Adjust path as needed
 import { alertService } from '@/lib/alert'; // Adjust path as needed
 import { router } from 'expo-router';
@@ -14,34 +14,18 @@ type Props = {
   favorites: Set<number>;
   setFavorites: (favorites: Set<number>) => void;
   onRetry?: () => void; // Optional retry callback for error state
+  supplier?: Supplier
 };
 
 const ProductsGrid = ({
   isPending,
   error,
   sortedProducts,
+  supplier,
   favorites,
   setFavorites,
   onRetry,
 }: Props) => {
-  const addToCartMutation = useAddToCart();
-
-  const handleAddToCart = (productId: number) => {
-    addToCartMutation.mutate(
-      { product_id: productId, quantity: 1 },
-      {
-        onSuccess: () => {
-          alertService('Added to Cart', 'Product has been added to your cart!', [
-            { text: 'Continue Shopping', style: 'default' },
-            { text: 'View Cart', onPress: () => router.push('/cart') },
-          ]);
-        },
-        onError: (error) => {
-          alertService('Error', error.message || 'Failed to add product to cart');
-        },
-      }
-    );
-  };
 
   // Animation for empty and error states
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -97,6 +81,7 @@ const ProductsGrid = ({
               product={item}
               favorites={favorites}
               setFavorites={setFavorites}
+              isCurrentUser={supplier?.id === item.supplier_id}
             />
           )}
           numColumns={2}

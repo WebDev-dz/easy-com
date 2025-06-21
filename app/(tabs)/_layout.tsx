@@ -1,5 +1,5 @@
 import { Tabs, useRouter, useSegments } from 'expo-router';
-import { Chrome as Home, ShoppingBag, User, Store, ShoppingCart } from 'lucide-react-native';
+import { Home, ShoppingBag, User, Store, ShoppingCart } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 

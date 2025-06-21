@@ -10,64 +10,29 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Package, Clock, CircleCheck as CheckCircle, Truck, AlertCircle } from 'lucide-react-native';
+import { ArrowLeft, Package, Clock, CircleCheck as CheckCircle, Truck, AlertCircle, ShoppingBag } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useGetUserOrders } from '@/hooks/supplier-order-hooks';
-import { OrderStatus, SupplierOrder } from '@/services/supplierOrders';
+import { OrderStatus } from '@/services/supplierOrders';
+import { Order } from '@/types/orders';
+import { SupplierOrderCard } from '@/components/supplier-order';
 
 const statusFilters: { key: OrderStatus | 'all'; label: string }[] = [
   { key: 'all', label: 'All Orders' },
   { key: 'pending', label: 'Pending' },
   { key: 'processing', label: 'In Progress' },
   { key: 'delivered', label: 'Delivered' },
-  { key: 'cancelled', label: 'Cancelled' },
 ];
 
-
-
-const getStatusColor = (status: OrderStatus) => {
-  switch (status) {
-    case 'pending': return '#F59E0B';
-    case 'processing': return '#3B82F6';
-    case 'delivered': return '#10B981';
-    case 'cancelled': return '#EF4444';
-    default: return '#6B7280';
-  }
-};
-
-const getStatusIcon = (status: OrderStatus) => {
-  switch (status) {
-    case 'pending': return Clock;
-    case 'processing': return Package;
-    case 'delivered': return CheckCircle;
-    case 'cancelled': return AlertCircle;
-    default: return Clock;
-  }
-};
-
-const formatDate = (dateString: string) => {
-  try {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  } catch {
-    return 'Invalid date';
-  }
-};
 export default function MyOrdersScreen() {
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "all">("all");
   const { user } = useAuth();
   const { data: orders, isPending: isLoading, error, mutate: getUserOrders } = useGetUserOrders();
 
-  const filteredOrders = (selectedStatus === 'all' 
-    ? orders 
-    : orders?.filter((order: SupplierOrder) => order.status === selectedStatus)) || [];
-
-  const formatPrice = (amount: number | undefined) => {
-    if (typeof amount !== 'number') return 'DA 0.00';
-    return `DA ${amount.toFixed(2)}`;
+  const handleRefetch = () => {
+    if (user) {
+      getUserOrders(user.id);
+    }
   };
 
   useEffect(() => {
@@ -75,6 +40,15 @@ export default function MyOrdersScreen() {
       getUserOrders(user.id);
     }
   }, [user]);
+  
+  const filteredOrders: Order[] = (selectedStatus === 'all' 
+    ? orders 
+    : orders?.filter((order: Order) => order.status === selectedStatus)) || [];
+
+  const formatPrice = (amount: number | undefined) => {
+    if (typeof amount !== 'number') return 'DA 0.00';
+    return `DA ${amount.toFixed(2)}`;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -125,72 +99,29 @@ export default function MyOrdersScreen() {
           <View style={styles.errorContainer}>
             <AlertCircle size={48} color="#EF4444" />
             <Text style={styles.errorText}>Failed to load orders</Text>
-            <Text style={styles.errorSubtext}>Please try again later</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={handleRefetch}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         )}
         
-        {!isLoading && !error && filteredOrders?.length > 0 ? (
-          filteredOrders.map((order: SupplierOrder) => {
-            const StatusIcon = getStatusIcon(order.status);
-            return (
-              <View key={order.id} style={styles.orderCard}>
-                <View style={styles.orderHeader}>
-                  <Text style={styles.orderId}>Order #{order.id}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(order.status)}20` }]}>
-                    <StatusIcon size={12} color={getStatusColor(order.status)} />
-                    <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.orderContent}>
-                  <View style={styles.orderInfo}>
-                    <Text style={styles.productName} numberOfLines={2}>
-                      {(order as any).title || 'Service Order'}
-                    </Text>
-                    <Text style={styles.storeName}>{order.full_name}</Text>
-                    <Text style={styles.deliveryAddress}>
-                      Deadline: {(order as any).deadline ? formatDate((order as any).deadline) : 'Not set'}
-                    </Text>
-                    {order.address && (
-                      <Text style={styles.address} numberOfLines={1}>
-                        📍 {order.address}
-                      </Text>
-                    )}
-                  </View>
-                  <View style={styles.priceContainer}>
-                    <Text style={styles.totalPrice}>
-                      {formatPrice((order as any).total_amount)}
-                    </Text>
-                    {order.is_validated && (
-                      <View style={styles.validatedBadge}>
-                        <CheckCircle size={10} color="#10B981" />
-                        <Text style={styles.validatedText}>Validated</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-
-                <View style={styles.orderFooter}>
-                  <Text style={styles.orderDate}>
-                    Ordered on {formatDate(order.created_at)}
-                  </Text>
-                  <TouchableOpacity 
-                    style={styles.trackButton}
-                    onPress={() => router.push(`/orders/${order.id.toString()}`)}
-                  >
-                    <Text style={styles.trackButtonText}>View Details</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          })
+        {!isLoading && !error && filteredOrders.length > 0 ? (
+          filteredOrders.map((order: Order) => (
+            <TouchableOpacity 
+              key={order.id}
+              onPress={() => router.push(`/orders/${order.id.toString()}`)}
+            >
+              <SupplierOrderCard
+              // @ts-ignore
+                order={order}
+                onStatusUpdate={handleRefetch}
+                small={true}
+              />
+            </TouchableOpacity>
+          ))
         ) : !isLoading && !error && (
           <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
-              <Package size={48} color="#9CA3AF" />
-            </View>
+            <ShoppingBag size={48} color="#9CA3AF" />
             <Text style={styles.emptyTitle}>No Orders Found</Text>
             <Text style={styles.emptyDescription}>
               {selectedStatus === 'all' 
@@ -267,7 +198,7 @@ const styles = StyleSheet.create({
   ordersContainer: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-    padding: 24,
+    padding: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -293,128 +224,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  errorSubtext: {
-    color: '#9CA3AF',
-    textAlign: 'center',
-    marginTop: 8,
-    fontSize: 14,
-  },
-  orderCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  orderId: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    gap: 4,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  orderContent: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  orderInfo: {
-    flex: 1,
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  storeName: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  quantity: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  deliveryAddress: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  address: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontStyle: 'italic',
-  },
-  priceContainer: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  totalPrice: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#059669',
-    marginBottom: 4,
-  },
-  validatedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#10B98115',
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    gap: 2,
   },
-  validatedText: {
-    fontSize: 10,
-    color: '#10B981',
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '500',
-  },
-  orderFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    paddingTop: 12,
-  },
-  orderDate: {
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
-  trackButton: {
-    backgroundColor: '#EBF4FF',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  trackButtonText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#2563EB',
   },
   emptyState: {
     flex: 1,

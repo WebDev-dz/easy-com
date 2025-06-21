@@ -38,8 +38,7 @@ export default function AddStoreScreen() {
   // Use the image uploader hook
   const imageUploader = useImageUploader({
     maxImages: 1, // Only allow 1 image for store
-    maxImageSize: 5 * 1024 * 1024, // 5MB
-    allowedImageTypes: ['jpg', 'jpeg', 'png'],
+    maxImageSize: 2 * 1024 * 1024, // 2MB
   });
 
   const storeTypes = [

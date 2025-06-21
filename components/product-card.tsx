@@ -16,22 +16,24 @@ import { router } from 'expo-router';
 import { useAddToCart } from '@/hooks/cart-hooks';
 import { alertService } from '@/lib/alert';
 import { API_URL } from '@/services/api';
-import { useDeleteProduct } from '@/hooks/product-hooks';
+import { useDeleteProduct, useGetProductsBySupplier } from '@/hooks/product-hooks';
 import { dialogService } from './dialog';
 import { useAuth } from '@/hooks/useAuth';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 type Props = {
     product: Product;
     favorites: Set<number>;
+    isCurrentUser: boolean;
     setFavorites: (favorites: Set<number>) => void;
 }
 
-export const ProductCard = ({ product, favorites, setFavorites }: Props) => {
+export const ProductCard = ({ product, favorites, setFavorites , isCurrentUser}: Props) => {
     const addToCartMutation = useAddToCart();
     const { data: deleteData, error: deleteError, isPending: isDeletePending, mutateAsync: deleteMutate } = useDeleteProduct();
     const { user } = useAuth();
+    const {mutate: getProduct} = useGetProductsBySupplier();
 
-    const isSupplier = user?.id === Number(product.supplier_id);
     console.log({product})
     const toggleFavorite = (id: number) => {
         const newFavorites = new Set(favorites);
@@ -78,7 +80,9 @@ export const ProductCard = ({ product, favorites, setFavorites }: Props) => {
                 {
                     text: 'Delete',
                     onPress: () => {
-                        deleteMutate(product.id);
+                        deleteMutate(product.id).then(() => router.replace({pathname:'/store/products', 
+                             params: { supplierId: product.supplier_id.toString() }
+                        }));
                     },
                 },
             ]
@@ -140,7 +144,7 @@ export const ProductCard = ({ product, favorites, setFavorites }: Props) => {
             <Eye size={16} color="#6B7280" />
             {/* <Text style={styles.viewButtonText}>View</Text> */}
           </TouchableOpacity>
-          {isSupplier ? (
+          {isCurrentUser ? (
             <TouchableOpacity
               style={[styles.deleteButton]}
               onPress={handleDeleteProduct}

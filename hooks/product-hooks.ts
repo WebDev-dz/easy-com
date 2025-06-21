@@ -24,7 +24,6 @@ export const useGetProduct = () => {
     return useMutation({
         mutationFn: productsService.getProductById,
         onSuccess: () => {
-            toastAlert.success('Product fetched successfully');
         },
         onError: (error) => {
             toastAlert.error('Failed to fetch product: ' + error.message);
@@ -36,7 +35,6 @@ export const useGetProductWithSupplier = () => {
     return useMutation({
         mutationFn: productsService.getProductWithSupplier,
         onSuccess: () => {
-            toastAlert.success('Product with supplier fetched successfully');
         },
         onError: (error) => {
             toastAlert.error('Failed to fetch product with supplier: ' + error.message);
@@ -48,7 +46,6 @@ export const useGetSupplierByProduct = () => {
     return useMutation({
         mutationFn: productsService.getSupplierByProduct,
         onSuccess: () => {
-            toastAlert.success('Supplier fetched successfully');
         },
         onError: (error) => {
             toastAlert.error('Failed to fetch supplier: ' + error.message);

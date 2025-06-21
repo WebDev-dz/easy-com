@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { User, Mail, Phone, Settings, ShoppingBag, Store, Heart, CircleHelp as HelpCircle, LogOut, ChevronRight, CreditCard as Edit, ShoppingCart } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
+import { API_URL } from '@/services/api';
 
 export default function ProfileScreen() {
   const {
@@ -105,7 +106,7 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={{ uri: user?.picture || "" }}
+              source={{ uri: `${API_URL.replace('/api', '')}/storage/${user?.picture}` || '' }}
               style={styles.profileImage}
             />
             <TouchableOpacity style={styles.editPhotoButton} onPress={handleEditProfile}>

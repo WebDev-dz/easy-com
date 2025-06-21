@@ -26,13 +26,13 @@ import SuppliersGrid from '@/components/supplier-grid';
 import Tabs, { TabConfig } from '@/components/ui/tabs';
 import { useFilters } from '@/hooks/filters-hook';
 import { FiltersModal } from '@/components/filters-modal';
-
-// Enhanced Types
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ProductsScreen() {
   const [selectedTab, setSelectedTab] = useState<'products' | 'suppliers'>('products');
   const [refreshing, setRefreshing] = useState(false);
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const { user } = useAuth();
 
   const {
     data: products = [],
@@ -51,8 +51,9 @@ export default function ProductsScreen() {
     error: categoryError,
   } = useCategories();
 
-  // Use the filters hook
   const filters = useFilters();
+
+  const [currentUserSuppliers, setCurrentUserSuppliers] = useState<Supplier[]>([]);
 
   const tabs: TabConfig[] = [
     {
@@ -69,7 +70,11 @@ export default function ProductsScreen() {
 
   // Apply filters and sorting
   const filteredAndSortedProducts = filters.sortedProducts(
-    filters.filteredProducts(products)
+    filters.filteredProducts(
+      products.filter((product: Product) => 
+        !currentUserSuppliers.some((supplier: Supplier) => supplier.id === product.supplier_id)
+      )
+    )
   );
 
   const filteredAndSortedSuppliers = filters.sortedSuppliers(
@@ -77,8 +82,13 @@ export default function ProductsScreen() {
   );
 
   useEffect(() => {
-    // loadData();
-  }, []);
+    if (user && suppliers) {
+      const mySuppliers = suppliers.filter((supplier: Supplier) => supplier.user_id === user.id);
+      setCurrentUserSuppliers(mySuppliers);
+    } else {
+      setCurrentUserSuppliers([]);
+    }
+  }, [suppliers, user]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -104,14 +114,11 @@ export default function ProductsScreen() {
   };
 
   const handleShare = (item: Product | Supplier) => {
-    // Implement share functionality
     alertService(
       'Share',
       `Share ${isProduct(item) ? item?.name : item.business_name}?`
     );
   };
-
-  
 
   const getSupplierTypeColor = (type: string) => {
     switch (type) {
@@ -139,7 +146,6 @@ export default function ProductsScreen() {
         </View>
       </View>
 
-      {/* Tab Selection */}
       <Tabs
         tabs={tabs}
         selectedTab={selectedTab}
@@ -147,7 +153,6 @@ export default function ProductsScreen() {
         styles={styles}
       />
 
-      {/* Search and Filter */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <Search size={20} color="#6B7280" style={styles.searchIcon} />
@@ -167,7 +172,6 @@ export default function ProductsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Content */}
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
@@ -177,13 +181,15 @@ export default function ProductsScreen() {
         }
       >
         {selectedTab === 'products' ? (
-          <ProductsGrid
-            isPending={isPending}
-            error={error}
-            sortedProducts={filteredAndSortedProducts}
-            favorites={favorites}
-            setFavorites={setFavorites}
-          />
+          (
+            <ProductsGrid
+              isPending={isPending}
+              error={error}
+              sortedProducts={filteredAndSortedProducts}
+              favorites={favorites}
+              setFavorites={setFavorites}
+            />
+          )
         ) : (
           <SuppliersGrid
             isPending={isSuppliersPending}
@@ -196,7 +202,6 @@ export default function ProductsScreen() {
         )}
       </ScrollView>
 
-      {/* Use the reusable FiltersModal component */}
       <FiltersModal
         {...filters}
         categories={categories?.data}
@@ -525,6 +530,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     fontSize: 16,
+    fontWeight: '500',
+  },
+  filtersRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  myProductsToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  myProductsLabel: {
+    marginRight: 8,
+    fontSize: 14,
+    color: '#374151',
     fontWeight: '500',
   },
 });

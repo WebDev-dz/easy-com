@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,11 +12,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Store, ShoppingCart, User, Package, TrendingUp, Inbox } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
-import { useStats } from '@/hooks/stats-hooks';
+import { useDashboard } from '@/hooks/dashboard-hooks';
 
 export default function HomeScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
-  const { userStats, isLoading: isStatsLoading, error: statsError, refetch } = useStats();
+  const { stats, isLoading: isStatsLoading, error: statsError, refetch } = useDashboard();
+
+  useEffect(() => {
+    if (user) {
+      refetch(user.id);
+    }
+  }, [user]);
 
   const handleNavigateToStores = () => {
     router.push('/(tabs)/stores');
@@ -49,13 +55,7 @@ export default function HomeScreen() {
       color: '#059669',
       onPress: handleNavigateToOrders,
     },
-    {
-      icon: Inbox,
-      title: 'Orders Received',
-      subtitle: 'Manage incoming orders',
-      color: '#DC2626',
-      onPress: handleNavigateToOrdersReceived,
-    },
+    
     {
       icon: User,
       title: 'Profile',
@@ -66,10 +66,10 @@ export default function HomeScreen() {
   ];
 
   const statsCards = [
-    { label: 'Active Stores', value: userStats.totalStores.toString(), icon: Store },
-    { label: 'Products Listed', value: userStats.totalProducts.toString(), icon: Package },
-    { label: 'Orders Received', value: userStats.totalOrders.toString(), icon: ShoppingCart },
-    { label: 'Total Reviews', value: userStats.totalReviews.toString(), icon: TrendingUp },
+    { label: 'Active Stores', value: stats?.totalStores.toString(), icon: Store },
+    // { label: 'Products Listed', value: stats.totalProducts.toString(), icon: Package },
+    { label: 'Orders Received', value: stats?.totalOrders.toString(), icon: ShoppingCart },
+    // { label: 'Total Reviews', value: stats.totalReviews.toString(), icon: TrendingUp },
   ];
 
   if (isAuthLoading || isStatsLoading) {
@@ -130,13 +130,13 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <View style={styles.recentActivity}>
+        {/* <View style={styles.recentActivity}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
           <View style={styles.activityCard}>
-            {userStats.recentActivity.length > 0 ? (
-              userStats.recentActivity.map((activity) => (
+            {stats.recentActivity?.length > 0 ? (
+              stats.recentActivity.map((activity: { id: number; description: string; createdAt: string }) => (
                 <View key={activity.id} style={styles.activityItem}>
-                  <View style={styles.activityDot} />
+                  <View style={styles.activityDot} /> 
                   <View style={styles.activityContent}>
                     <Text style={styles.activityTitle}>{activity.description}</Text>
                     <Text style={styles.activityTime}>
@@ -149,7 +149,7 @@ export default function HomeScreen() {
               <Text style={styles.noActivityText}>No recent activities</Text>
             )}
           </View>
-        </View>
+        </View> */}
       </ScrollView>
     </SafeAreaView>
   );

@@ -40,13 +40,9 @@ export const useBuyNow = () => {
             alertService(
                 'Order Confirmed!',
                 'Your order has been placed successfully. You will receive a confirmation shortly.',
-                [
-                  { 
-                    text: 'OK', 
-                    onPress: () => router.push('/(tabs)') 
-                  }
-                ]
-              )
+                
+              );
+              router.push('/(tabs)')
         },
         onError: (error) => {
             alertService('Error', error.message);
@@ -75,7 +71,7 @@ export const useRemoveFromCart = () => {
         onSuccess: () => {
             toastAlert.success('Product removed from cart');
         },
-        onError: (error) => {
+        onError: () => {
             toastAlert.error('Failed to remove product from cart');
         }
     });

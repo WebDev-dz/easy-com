@@ -12,19 +12,58 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
+import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import { alertService } from '@/lib/alert';
+
+// Zod schema for login form validation
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .email('Please enter a valid email address'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(6, 'Password must be at least 6 characters long'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+type ValidationErrors = Partial<Record<keyof LoginFormData, string>>;
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const { login, isLoading, error, clearError } = useAuth();
 
+  const validateForm = (): boolean => {
+    try {
+      loginSchema.parse({ email, password });
+      setValidationErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: ValidationErrors = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            errors[err.path[0] as keyof LoginFormData] = err.message;
+          }
+        });
+        setValidationErrors(errors);
+      }
+      return false;
+    }
+  };
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      alertService('Error', 'Please fill in all fields');
+    // Clear previous validation errors
+    setValidationErrors({});
+
+    // Validate form
+    if (!validateForm()) {
       return;
     }
 
@@ -36,16 +75,27 @@ export default function LoginScreen() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    alertService('Google Sign In', 'Google sign in will be implemented');
+  // Clear validation error for specific field when user starts typing
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    if (validationErrors.email) {
+      setValidationErrors(prev => ({ ...prev, email: undefined }));
+    }
   };
 
-  // Clear error when component unmounts or when user starts typing
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    if (validationErrors.password) {
+      setValidationErrors(prev => ({ ...prev, password: undefined }));
+    }
+  };
+
+  // Clear error when component unmounts
   React.useEffect(() => {
     return () => clearError();
   }, []);
 
-  // Show error alert if there's an error
+  // Show error alert if there's an authentication error (not validation error)
   React.useEffect(() => {
     if (error) {
       alertService('Error', error);
@@ -77,24 +127,33 @@ export default function LoginScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                validationErrors.email && styles.inputError
+              ]}
               placeholder="example@gmail.com"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={handleEmailChange}
               keyboardType="email-address"
               autoCapitalize="none"
               placeholderTextColor="#9CA3AF"
             />
+            {validationErrors.email && (
+              <Text style={styles.errorText}>{validationErrors.email}</Text>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
+            <View style={[
+              styles.passwordContainer,
+              validationErrors.password && styles.inputError
+            ]}>
               <TextInput
                 style={styles.passwordInput}
                 placeholder="••••••••"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
                 placeholderTextColor="#9CA3AF"
               />
@@ -109,6 +168,9 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
             </View>
+            {validationErrors.password && (
+              <Text style={styles.errorText}>{validationErrors.password}</Text>
+            )}
           </View>
 
           <View style={styles.optionsContainer}>
@@ -145,8 +207,6 @@ export default function LoginScreen() {
               </Link>
             </Text>
           </View>
-
-         
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -235,6 +295,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
     backgroundColor: '#FFFFFF',
+  },
+  inputError: {
+    borderColor: '#EF4444',
+    borderWidth: 1.5,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 4,
+    marginLeft: 4,
   },
   passwordContainer: {
     flexDirection: 'row',

@@ -135,6 +135,7 @@ export default function StoreProductsScreen() {
           error={error}
           sortedProducts={filteredProducts}
           favorites={favorites}
+          supplier={store}
           setFavorites={toggleFavorite}
         />
       </ScrollView>

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Package, AlertCircle, RefreshCcw } from 'lucide-react-native';
 import { SupplierOrderCard } from './supplier-order'; // Adjust path as needed
-import { SupplierOrder } from '@/services/supplierOrders'; // Adjust path as needed
+import { SupplierOrder } from '@/services/types';
 
 type Props = {
   isPending: boolean;

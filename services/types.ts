@@ -192,6 +192,7 @@ export interface ValidateCartRequest {
 export interface UpdateCartRequest {
     product_id: number;
     quantity: number;
+    order_id?: number;
 }
 
 export interface RemoveFromCartRequest {
@@ -321,6 +322,21 @@ export interface ProductResponse {
 export interface ProductsResponse {
     data: Product[];
 }
+
+export interface DashboardStats {
+    totalStores: number;
+    totalOrders: number;
+    // totalReviews: number;
+    // recentActivity: {
+    //   id: number;
+    //   description: string;
+    //   createdAt: string;
+    // }[];
+  }
+  
+  export interface DashboardStatsResponse {
+      data: DashboardStats;
+  }
 
 // Search Types
 export interface SearchResultProduct {

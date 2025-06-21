@@ -264,6 +264,7 @@ export const useImageUploader = ({
         };
       }
       const imageMimeType = image.type;
+      console.log({ imageMimeType });
       console.log({allowedImageTypes})
       if (imageMimeType && !allowedImageTypes.includes(imageMimeType)) {
         console.log("Not allowed mime type", imageMimeType);

@@ -11,13 +11,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, ShoppingCart, Store, Star, Heart, User } from 'lucide-react-native';
-import { useGetProduct } from '@/hooks/product-hooks';
-import { alertService } from '@/lib/alert';
+import { ArrowLeft, ShoppingCart, Store, Star, Heart, User, Edit, Trash2 } from 'lucide-react-native';
+import { useGetProduct, useDeleteProduct } from '@/hooks/product-hooks';
+import { alertService, confirmService } from '@/lib/alert';
 import { Product, ProductWithSupplier } from '@/services/types';
 import { useCategory } from '@/hooks/category-hooks';
 import { useAddToCart } from '@/hooks/cart-hooks';
 import { API_URL } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
 
 const { width } = Dimensions.get('window');
 
@@ -29,6 +30,9 @@ export default function ProductDetailsScreen() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { data: category, mutate: getCategory } = useCategory();
   const addToCartMutation = useAddToCart();
+  const { user } = useAuth();
+  const { mutateAsync: deleteProduct, isPending: isDeleting } = useDeleteProduct();
+
 
   const getProduct = useGetProduct();
 
@@ -58,7 +62,7 @@ export default function ProductDetailsScreen() {
               });
                 
             },
-            onError: (error) => {
+            onError: (error: any) => {
                 alertService('Error', error.message || 'Failed to add product to cart');
             }
         }
@@ -224,16 +228,41 @@ export default function ProductDetailsScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.buyButton, product.quantity <= 0 && styles.buyButtonDisabled]}
-          onPress={handleBuyNow}
-          disabled={product.quantity <= 0}
-        >
-          <ShoppingCart size={20} color="#FFFFFF" />
-          <Text style={styles.buyButtonText}>
-            {product.quantity > 0 ? 'Buy Now' : 'Out of Stock'}
-          </Text>
-        </TouchableOpacity>
+        {user?.id === product.supplier.user_id ? (
+          <View style={styles.ownerActions}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => router.push({ pathname: '/product/edit', params: { id: product.id } })}
+            >
+              <Edit size={20} color="#FFFFFF" />
+              <Text style={styles.buyButtonText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.deleteButton, isDeleting && styles.buyButtonDisabled]}
+              onPress={() => {
+                confirmService('Delete Product', 'Are you sure you want to delete this product?', [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Delete', onPress: () => deleteProduct(product.id).then(() => router.back()), style: 'destructive' },
+                ]);
+              }}
+              disabled={isDeleting}
+            >
+              <Trash2 size={20} color="#FFFFFF" />
+              <Text style={styles.buyButtonText}>{isDeleting ? 'Deleting...' : 'Delete'}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[styles.buyButton, product.quantity <= 0 && styles.buyButtonDisabled]}
+            onPress={handleBuyNow}
+            disabled={product.quantity <= 0}
+          >
+            <ShoppingCart size={20} color="#FFFFFF" />
+            <Text style={styles.buyButtonText}>
+              {product.quantity > 0 ? 'Buy Now' : 'Out of Stock'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -530,6 +559,30 @@ const styles = StyleSheet.create({
     padding: 24,
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
+  },
+  ownerActions: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  editButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#8B5CF6',
+    borderRadius: 12,
+    paddingVertical: 16,
+    gap: 8,
+  },
+  deleteButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EF4444',
+    borderRadius: 12,
+    paddingVertical: 16,
+    gap: 8,
   },
   buyButton: {
     flexDirection: 'row',

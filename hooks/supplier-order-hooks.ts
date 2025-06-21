@@ -3,12 +3,24 @@ import supplierOrdersService from '../services/supplierOrders';
 import { UpdateOrderStatusRequest } from '../services/types';
 import { useAuth } from '@/hooks/useAuth';
 import { toastAlert } from '@/lib/toastAlert';
+import UserOrdersService from "../services/supplierOrders";
 
 export const useGetUserOrders = () => {
     return useMutation({
         mutationFn: supplierOrdersService.getUserOrders,
         onSuccess: () => {
             toastAlert.success('Orders fetched successfully');
+        },
+        onError: (error) => {
+            toastAlert.error('Failed to fetch orders: ' + error.message);
+        }
+    });
+};
+
+export const useGetUserOrder = () => {
+    return useMutation({
+        mutationFn: UserOrdersService.getOrderById,
+        onSuccess: () => {
         },
         onError: (error) => {
             toastAlert.error('Failed to fetch orders: ' + error.message);
@@ -32,7 +44,6 @@ export const useGetSupplierOrder = () => {
     return useMutation({
         mutationFn: supplierOrdersService.getOrderById,
         onSuccess: () => {
-            toastAlert.success('Order fetched successfully');
         },
         onError: (error) => {
             toastAlert.error('Failed to fetch order: ' + error.message);

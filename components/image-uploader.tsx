@@ -24,7 +24,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       {/* Display uploaded images */}
       {productImages.length > 0 && (
         <View style={styles.imagesGrid}>
-          {productImages.map((image: ProductImage, index: number) => (
+          {/* @ts-ignore */}
+          {productImages?.map((image: ProductImage, index: number) => (
             <View key={index} style={styles.imageContainer}>
               <Image source={{ uri: image.uri }} style={styles.uploadedImage} />
               <TouchableOpacity
