@@ -139,7 +139,7 @@ export const SupplierOrderCard: React.FC<SupplierOrderCardProps> = ({ order, onS
         </View>
       )}
 
-      {order.status === 'processing' && (
+      {order.status === 'processing' && user.id !== && (
         <View style={styles.actions}>
           <TouchableOpacity
             style={[styles.actionButton, styles.deliverButton]}
