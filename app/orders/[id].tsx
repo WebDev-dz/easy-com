@@ -4,6 +4,8 @@ import { useGetUserOrder } from '../../hooks/supplier-order-hooks';
 import { useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react-native';
 import { alertService } from '@/lib/alert';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '@/services/api';
 
 // Interfaces remain unchanged
 export interface Supplier {
@@ -161,7 +163,7 @@ export default function OrderDetails() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Fixed Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -240,7 +242,7 @@ export default function OrderDetails() {
                   style={[styles.itemRow, index === order.order_products.length - 1 && styles.lastItemRow]}
                 >
                   {orderProduct.product.pictures && orderProduct.product.pictures.length > 0 && (
-                    <Image source={{ uri: orderProduct.product.pictures[0].picture }} style={styles.productImage} />
+                    <Image source={{ uri: `${API_URL.replace('/api', '')}/storage/${orderProduct.product.pictures[0].picture}` }} style={styles.productImage} />
                   )}
                   <View style={styles.itemInfo}>
                     <Text style={styles.itemName}>{orderProduct.product.name}</Text>
@@ -277,7 +279,7 @@ export default function OrderDetails() {
           <View style={styles.bottomSpacing} />
         </ScrollView>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -291,8 +293,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 16,
+    // paddingTop: 60,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
