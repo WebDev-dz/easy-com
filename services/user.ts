@@ -1,6 +1,7 @@
 import { User, UserResponse, UpdateUserRequest, UpdatePasswordRequest, UpdatePasswordResponse } from './types';
 import { useAuth } from '@/hooks/useAuth';
-
+import { Platform } from 'react-native';
+import { ImagePickerAsset } from 'expo-image-picker';
 
 import  {api, getAuthHeaders } from './api';
 
@@ -21,9 +22,25 @@ const userService = {
         if (data.full_name) formData.append('full_name', data.full_name);
         if (data.email) formData.append('email', data.email);
         if (data.phone_number) formData.append('phone_number', data.phone_number);
-        if (data.picture) formData.append('picture', data.picture);
         if (data.address) formData.append('address', data.address);
         if (data.city) formData.append('city', data.city);
+        
+        // Handle picture upload
+        if (data.picture) {
+            if (Platform.OS === 'web' && data.picture instanceof File) {
+                formData.append('picture', data.picture);
+            } else if (Platform.OS !== 'web') {
+                const imagePickerAsset = data.picture as unknown as ImagePickerAsset;
+                
+                const fileObject = {
+                    uri: imagePickerAsset.uri,
+                    type: imagePickerAsset.mimeType || 'image/jpeg',
+                    name: imagePickerAsset.fileName || `profile_${Date.now()}.jpg`,
+                } as any;
+
+                formData.append('picture', fileObject);
+            }
+        }
 
         const response = await api.post<UserResponse>(`/user/update`, formData, {
             headers: {

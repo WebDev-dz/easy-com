@@ -43,7 +43,7 @@ export interface UpdateProfileRequest {
     full_name?: string;
     email?: string;
     phone_number?: string;
-    picture?: File;
+    picture?: File | ImagePickerAsset;
     address?: string;
     city?: string;
 }

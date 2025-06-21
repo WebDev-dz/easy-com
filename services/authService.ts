@@ -10,6 +10,8 @@ import {
     User,
 } from './types';
 import { api, getAuthHeaders } from './api';
+import { Image, Platform } from 'react-native';
+import { ImagePickerAsset } from 'expo-image-picker';
 
 // Base URL for API requests (adjust according to your environment)
 
@@ -44,10 +46,29 @@ export const authService = {
 
     // Update user profile
     updateProfile: async (data: UpdateProfileRequest): Promise<UpdateProfileResponse> => {
+        console.log('Updating profile with data:', data);
         const formData = new FormData();
+        
         Object.entries(data).forEach(([key, value]) => {
-            if (value !== undefined) {
-                formData.append(key, value);
+            if (value !== undefined && value !== null) {
+                if (key === 'picture') {
+                    if (Platform.OS === 'web' && value instanceof File) {
+                        formData.append(key, value);
+                    } else if (Platform.OS !== 'web') {
+                        const imagePickerAsset = value as ImagePickerAsset;
+                        
+                        // Create the proper file object structure for React Native
+                        const fileObject = {
+                            uri: imagePickerAsset.uri,
+                            type: imagePickerAsset.mimeType || 'image/jpeg',
+                            name: imagePickerAsset.fileName || `profile_${Date.now()}.jpg`,
+                        } as any;
+
+                        formData.append(key, fileObject);
+                    }
+                } else {
+                    formData.append(key, value.toString());
+                }
             }
         });
 

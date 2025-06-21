@@ -32,7 +32,7 @@ export const ProductCard = ({ product, favorites, setFavorites }: Props) => {
     const { user } = useAuth();
 
     const isSupplier = user?.id === Number(product.supplier_id);
-
+    console.log({product})
     const toggleFavorite = (id: number) => {
         const newFavorites = new Set(favorites);
         if (newFavorites.has(id)) {

@@ -9,17 +9,22 @@ import {
   Alert,
   Image,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Upload, Eye, EyeOff, User, Mail, Phone, FileText, LogOut } from 'lucide-react-native';
-import { useCurrentUser, useUpdateProfile, useUpdatePassword } from '../../hooks/user-hooks';
+import { useUpdatePassword } from '../../hooks/user-hooks';
 import { alertService } from '@/lib/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { API_URL } from '@/services/api';
+import { ImagePickerAsset } from 'expo-image-picker';
+import { useImageUploader } from '@/hooks/image-uploader';
+
+const isAsset = (value: any): value is ImagePickerAsset => typeof value === 'object';
 
 export default function EditProfileScreen() {
-  const { user, updateProfile, isLoading, logout } = useAuth();
+  const { getUser, user, updateProfile, isLoading, logout } = useAuth();
   const updatePassword = useUpdatePassword();
 
   const [fullName, setFullName] = useState('');
@@ -33,40 +38,39 @@ export default function EditProfileScreen() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const {
+    productImages: images,
+    handleImageUpload,
+    removeImage,
+    clearImages,
+  } = useImageUploader({ maxImages: 1 });
+
+  const profileImage = images[0];
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profileImage) {
+      if (Platform.OS === 'web' && profileImage instanceof File) {
+        const url = URL.createObjectURL(profileImage);
+        setImagePreview(url);
+        return () => URL.revokeObjectURL(url);
+      } else {
+        setImagePreview((profileImage as ImagePickerAsset).uri);
+      }
+    } else {
+      setImagePreview(null);
+    }
+  }, [profileImage]);
+
   // Initialize form with user data
   useEffect(() => {
     if (user) {
-      setFullName(user.full_name);
-      setEmail(user.email);
+      setFullName(user.full_name || '');
+      setEmail(user.email || '');
       setPhone(user.phone_number || '');
       setDescription(user.address || '');
     }
   }, [user]);
-
-  const handleImageUpload = () => {
-    alertService(
-      'Change Profile Picture',
-      'Choose how you want to update your profile picture',
-      [
-        { 
-          text: 'Camera', 
-          onPress: () => alertService('Camera', 'Camera integration coming soon!') 
-        },
-        { 
-          text: 'Gallery', 
-          onPress: () => alertService('Gallery', 'Gallery integration coming soon!') 
-        },
-        { 
-          text: 'Remove Photo', 
-          onPress: () => {
-            updateProfile({ picture: new File([], 'empty.jpg') });
-          }, 
-          style: 'destructive' 
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
-  };
 
   const handleSave = async () => {
     if (!fullName || !email || !phone) {
@@ -92,6 +96,7 @@ export default function EditProfileScreen() {
         email,
         phone_number: phone,
         address: description,
+        picture: profileImage,
       });
 
       // Update password if provided
@@ -110,27 +115,14 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-              router.replace('/(auth)/login');
-            } catch (error) {
-              alertService('Error', 'Failed to logout. Please try again.');
-            } finally {
-            }
-          },
-        },
-      ]
-    );
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.replace('/(auth)/login');
+    } catch (error) {
+      alertService('Error', 'Failed to logout. Please try again.');
+    } finally {
+    }
   };
 
   if (isLoading) {
@@ -171,7 +163,9 @@ export default function EditProfileScreen() {
           {/* Profile Picture */}
           <View style={styles.profileImageSection}>
             <TouchableOpacity onPress={handleImageUpload} style={styles.profileImageContainer}>
-              {user?.picture ? (
+              {imagePreview ? (
+                <Image source={{ uri: imagePreview }} style={styles.profileImage} />
+              ) : user?.picture ? (
                 <Image source={{ uri: `${API_URL.replace('/api', '')}/storage/${user?.picture}` }} style={styles.profileImage} />
               ) : (
                 <View style={styles.profileImagePlaceholder}>

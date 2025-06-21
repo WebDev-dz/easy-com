@@ -194,7 +194,7 @@ export default function AddProductScreen() {
         description: '',
       });
       setErrors({});
-      router.back();
+      router.push('/store/products');
     } catch (error: any) {
       console.error('Submit error:', error);
       let errorMessage = 'Failed to add product. Please try again.';
