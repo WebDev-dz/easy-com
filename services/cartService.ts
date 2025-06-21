@@ -70,7 +70,8 @@ export const cartService = {
     // Remove from Cart
     removeFromCart: async (productId: number, data?: RemoveFromCartRequest): Promise<RemoveFromCartResponse> => {
         const config: AxiosRequestConfig = {
-            data,
+            headers: await getAuthHeaders(),
+            data: data
         };
         const response = await api.delete<RemoveFromCartResponse>(`orders/cart/remove/${productId}?order_id=${data?.order_id}`, config);
         return response.data;

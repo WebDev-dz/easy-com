@@ -5,6 +5,7 @@ import { useUpdateSupplierOrderStatus } from '@/hooks/supplier-order-hooks';
 import { formatDate } from '@/lib/utils';
 import { dialogService } from '@/components/dialog';
 import { SupplierOrder } from '@/services/types';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SupplierOrderCardProps {
   order: SupplierOrder;
@@ -13,6 +14,7 @@ interface SupplierOrderCardProps {
 
 export const SupplierOrderCard: React.FC<SupplierOrderCardProps> = ({ order, onStatusUpdate }) => {
   const updateStatusMutation = useUpdateSupplierOrderStatus();
+  const { user } = useAuth();
 
   const handleStatusUpdate = async (newStatus: 'processing' | 'delivered' | 'cancelled') => {
     try {
@@ -55,6 +57,9 @@ export const SupplierOrderCard: React.FC<SupplierOrderCardProps> = ({ order, onS
         return '#6B7280'; // Gray
     }
   };
+
+  // Check if current user is the one who placed the order
+  const isOrderOwner = user?.id === order.user_id;
 
   return (
     <View style={styles.container}>
@@ -104,8 +109,8 @@ export const SupplierOrderCard: React.FC<SupplierOrderCardProps> = ({ order, onS
         ))}
       </View>
 
-      {/* Actions */}
-      {order.status === 'pending' && (
+      {/* Actions - Only show if current user is NOT the order owner */}
+      {!isOrderOwner && order.status === 'pending' && (
         <View style={styles.actions}>
           <TouchableOpacity
             style={[styles.actionButton, styles.refuseButton]}
@@ -139,7 +144,7 @@ export const SupplierOrderCard: React.FC<SupplierOrderCardProps> = ({ order, onS
         </View>
       )}
 
-      {order.status === 'processing' && (
+      {!isOrderOwner && order.status === 'processing' && (
         <View style={styles.actions}>
           <TouchableOpacity
             style={[styles.actionButton, styles.deliverButton]}

@@ -3,100 +3,102 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIn
 import { useGetUserOrder } from '../../hooks/supplier-order-hooks';
 import { useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react-native';
+import { alertService } from '@/lib/alert';
 
+// Interfaces remain unchanged
 export interface Supplier {
-  id: number
-  user_id: number
-  business_name: string
-  address: string
-  description: string
-  picture?: string
-  domain_id: number
-  created_at: string
-  updated_at: string
+  id: number;
+  user_id: number;
+  business_name: string;
+  address: string;
+  description: string;
+  picture?: string;
+  domain_id: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Wilaya {
-  id: number
-  name: string
-  code: string
-  created_at: any
-  updated_at: any
+  id: number;
+  name: string;
+  code: string;
+  created_at: any;
+  updated_at: any;
 }
 
 export interface Commune {
-  id: number
-  name: string
-  wilaya_id: number
-  created_at: any
-  updated_at: any
+  id: number;
+  name: string;
+  wilaya_id: number;
+  created_at: any;
+  updated_at: any;
 }
 
 export interface OrderProduct {
-  id: number
-  order_id: number
-  product_id: number
-  quantity: number
-  unit_price: string
-  product: Product
+  id: number;
+  order_id: number;
+  product_id: number;
+  quantity: number;
+  unit_price: string;
+  product: Product;
 }
 
 export interface Product {
-  id: number
-  supplier_id: number
-  category_id: number
-  name: string
-  price: string
-  description: string
-  visibility: string
-  quantity: number
-  minimum_quantity: number
-  created_at: string
-  updated_at: string
-  pictures: Picture[]
+  id: number;
+  supplier_id: number;
+  category_id: number;
+  name: string;
+  price: string;
+  description: string;
+  visibility: string;
+  quantity: number;
+  minimum_quantity: number;
+  created_at: string;
+  updated_at: string;
+  pictures: Picture[];
 }
 
 export interface Picture {
-  id: number
-  product_id: number
-  picture: string
-  created_at: string
-  updated_at: string
+  id: number;
+  product_id: number;
+  picture: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Order {
-  id: number
-  user_id: number
-  supplier_id: number
-  wilaya_id: number
-  commune_id: number
-  full_name: string
-  phone_number: string
-  status: string
-  order_date: string
-  is_validated: boolean
-  address: any
-  created_at: string
-  updated_at: string
-  user: User
-  supplier: Supplier
-  wilaya: Wilaya
-  commune: Commune
-  order_products: OrderProduct[]
+  id: number;
+  user_id: number;
+  supplier_id: number;
+  wilaya_id: number;
+  commune_id: number;
+  full_name: string;
+  phone_number: string;
+  status: string;
+  order_date: string;
+  is_validated: boolean;
+  address: any;
+  created_at: string;
+  updated_at: string;
+  user: User;
+  supplier: Supplier;
+  wilaya: Wilaya;
+  commune: Commune;
+  order_products: OrderProduct[];
 }
 
 export interface User {
-  id: number
-  full_name: string
-  email: string
-  phone_number: string
-  role: string
-  picture: string
-  address: string
-  city: any
-  email_verified_at: string
-  created_at: string
-  updated_at: string
+  id: number;
+  full_name: string;
+  email: string;
+  phone_number: string;
+  role: string;
+  picture: string;
+  address: string;
+  city: any;
+  email_verified_at: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function OrderDetails() {
@@ -142,253 +144,140 @@ export default function OrderDetails() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     });
   };
 
   const calculateTotal = () => {
     if (!order?.order_products) return 0;
     return order?.order_products?.reduce((total, product) => {
-      return total + (parseFloat(product.unit_price) * product.quantity);
+      return total + parseFloat(product.unit_price) * product.quantity;
     }, 0);
   };
 
-  // const handleContactSupplier = () => {
-  //   if (order?.supplier?.phone_number) {
-  //     // You can implement phone call or messaging functionality here
-  //     Alert.alert(
-  //       'Contact Supplier',
-  //       `Call ${order.supplier.business_name}?`,
-  //       [
-  //         { text: 'Cancel', style: 'cancel' },
-  //         { text: 'Call', onPress: () => console.log('Calling supplier...') }
-  //       ]
-  //     );
-  //   }
-  // };
-
   const handleTrackOrder = () => {
-    Alert.alert('Track Order', 'Order tracking feature coming soon!');
+    alertService('Track Order', 'Order tracking feature coming soon!');
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3B82F6" />
-        <Text style={styles.loadingText}>Loading order details...</Text>
-      </View>
-    );
-  }
-
-  if (!order) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorIcon}>❌</Text>
-        <Text style={styles.errorTitle}>Order Not Found</Text>
-        <Text style={styles.errorText}>The order you're looking for doesn't exist or has been removed.</Text>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      {/* Fixed Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.title}>My Orders</Text>
-        {/* <View style={styles.placeholder} /> */}
+        <Text style={styles.headerTitle}>Order Details</Text>
+        <View style={styles.headerPlaceholder} />
       </View>
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View style={styles.orderTitleSection}>
-          <Text style={styles.orderTitle}>Order #{order.id}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
-            <Text style={styles.statusIcon}>{getStatusIcon(order.status)}</Text>
-            <Text style={styles.statusText}>{order.status.toUpperCase()}</Text>
-          </View>
+
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text style={styles.loadingText}>Loading order details...</Text>
         </View>
-        <Text style={styles.orderDate}>Placed on {formatDate(order.created_at)}</Text>
-        {order.is_validated && (
-          <View style={styles.validatedBadge}>
-            <Text style={styles.validatedText}>✓ Validated</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.quickActions}>
-        <TouchableOpacity style={styles.actionButton} onPress={handleTrackOrder}>
-          <Text style={styles.actionIcon}>🚚</Text>
-          <Text style={styles.actionText}>Track Order</Text>
-        </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.actionButton} onPress={handleContactSupplier}>
-          <Text style={styles.actionIcon}>📞</Text>
-          <Text style={styles.actionText}>Contact Supplier</Text>
-        </TouchableOpacity> */}
-      </View>
-
-      {/* Supplier Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🏪 Supplier Information</Text>
-        <View style={styles.supplierCard}>
-          {order.supplier.picture && (
-            <Image source={{ uri: order.supplier.picture }} style={styles.supplierImage} />
-          )}
-          <View style={styles.supplierInfo}>
-            <Text style={styles.supplierName}>{order.supplier.business_name}</Text>
-            <Text style={styles.supplierDescription}>{order.supplier.description}</Text>
-            <Text style={styles.supplierAddress}>📍 {order.supplier.address}</Text>
-          </View>
+      ) : !order ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorIcon}>❌</Text>
+          <Text style={styles.errorTitle}>Order Not Found</Text>
+          <Text style={styles.errorText}>The order you're looking for doesn't exist or has been removed.</Text>
         </View>
-      </View>
-
-      {/* Customer Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>👤 Customer Information</Text>
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Name:</Text>
-            <Text style={styles.infoValue}>{order.user.full_name}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Email:</Text>
-            <Text style={styles.infoValue}>{order.user.email}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Phone:</Text>
-            <Text style={styles.infoValue}>{order.user.phone_number}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Delivery Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🚚 Delivery Information</Text>
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Recipient:</Text>
-            <Text style={styles.infoValue}>{order.full_name}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Phone:</Text>
-            <Text style={styles.infoValue}>{order.phone_number}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Location:</Text>
-            <Text style={styles.infoValue}>{order.commune.name}, {order.wilaya.name}</Text>
-          </View>
-          {order.address && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Address:</Text>
-              <Text style={styles.infoValue}>{order.address}</Text>
+      ) : (
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Order Info Section */}
+          <View style={styles.orderInfoSection}>
+            <View style={styles.orderHeader}>
+              <View>
+                <Text style={styles.orderTitle}>Order #{order.id}</Text>
+                <Text style={styles.orderDate}>{formatDate(order.created_at)}</Text>
+              </View>
+              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
+                <Text style={styles.statusIcon}>{getStatusIcon(order.status)}</Text>
+                <Text style={styles.statusText}>{order.status.toUpperCase()}</Text>
+              </View>
             </View>
-          )}
-        </View>
-      </View>
 
-      {/* Order Items */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📦 Order Items ({order.order_products.length})</Text>
-        <View style={styles.itemsContainer}>
-          {order?.order_products?.map((orderProduct, index) => (
-            <View key={orderProduct.id} style={[
-              styles.itemCard,
-              index === order.order_products.length - 1 && styles.lastItemCard
-            ]}>
-              {orderProduct.product.pictures && orderProduct.product.pictures.length > 0 && (
-                <Image 
-                  source={{ uri: orderProduct.product.pictures[0].picture }} 
-                  style={styles.productImage} 
-                />
-              )}
-              <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{orderProduct.product.name}</Text>
-                <Text style={styles.itemDescription}>{orderProduct.product.description}</Text>
-                <View style={styles.itemPricing}>
-                  <Text style={styles.itemPrice}>
-                    {parseFloat(orderProduct.unit_price).toLocaleString('fr-DZ')} DA each
-                  </Text>
-                  <Text style={styles.itemQuantity}>Quantity: {orderProduct.quantity}</Text>
-                  <Text style={styles.itemTotal}>
-                    Subtotal: {(parseFloat(orderProduct.unit_price) * orderProduct.quantity).toLocaleString('fr-DZ')} DA
-                  </Text>
+            {order.is_validated && (
+              <View style={styles.validatedBadge}>
+                <Text style={styles.validatedText}>✓ Validated</Text>
+              </View>
+            )}
+          </View>
+
+        
+
+          {/* Supplier & Delivery Combined */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Supplier & Delivery</Text>
+            <View style={styles.card}>
+              <View style={styles.supplierRow}>
+                {order.supplier.picture && (
+                  <Image source={{ uri: order.supplier.picture }} style={styles.supplierImage} />
+                )}
+                <View style={styles.supplierInfo}>
+                  <Text style={styles.supplierName}>{order.supplier.business_name}</Text>
+                  <Text style={styles.supplierAddress}>📍 {order.supplier.address}</Text>
                 </View>
               </View>
-            </View>
-          ))}
-        </View>
-      </View>
 
-      {/* Order Summary */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>💰 Order Summary</Text>
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Items Total:</Text>
-            <Text style={styles.summaryValue}>
-              {calculateTotal().toLocaleString('fr-DZ')} DA
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Delivery Fee:</Text>
-            <Text style={styles.summaryValue}>Free</Text>
-          </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryTotalLabel}>Total Amount:</Text>
-            <Text style={styles.summaryTotalValue}>
-              {calculateTotal().toLocaleString('fr-DZ')} DA
-            </Text>
-          </View>
-        </View>
-      </View>
+              <View style={styles.divider} />
 
-      {/* Order Timeline */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📅 Order Timeline</Text>
-        <View style={styles.timelineCard}>
-          <View style={styles.timelineItem}>
-            <View style={styles.timelineIcon}>
-              <Text style={styles.timelineIconText}>📝</Text>
-            </View>
-            <View style={styles.timelineContent}>
-              <Text style={styles.timelineTitle}>Order Placed</Text>
-              <Text style={styles.timelineDate}>{formatDate(order.created_at)}</Text>
+              <View style={styles.deliveryInfo}>
+                <Text style={styles.deliveryTitle}>Delivery to:</Text>
+                <Text style={styles.deliveryText}>{order.full_name} • {order.phone_number}</Text>
+                <Text style={styles.deliveryText}>{order.commune.name}, {order.wilaya.name}</Text>
+              </View>
             </View>
           </View>
-          
-          {order.status !== 'pending' && (
-            <View style={styles.timelineItem}>
-              <View style={styles.timelineIcon}>
-                <Text style={styles.timelineIconText}>✅</Text>
-              </View>
-              <View style={styles.timelineContent}>
-                <Text style={styles.timelineTitle}>Order Confirmed</Text>
-                <Text style={styles.timelineDate}>{formatDate(order.updated_at)}</Text>
-              </View>
-            </View>
-          )}
-          
-          {order.status === 'delivered' && (
-            <View style={styles.timelineItem}>
-              <View style={styles.timelineIcon}>
-                <Text style={styles.timelineIconText}>🚚</Text>
-              </View>
-              <View style={styles.timelineContent}>
-                <Text style={styles.timelineTitle}>Order Delivered</Text>
-                <Text style={styles.timelineDate}>{formatDate(order.updated_at)}</Text>
-              </View>
-            </View>
-          )}
-        </View>
-      </View>
 
-      <View style={styles.bottomSpacing} />
-    </ScrollView>
+          {/* Order Items */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Items ({order.order_products.length})</Text>
+            <View style={styles.card}>
+              {order?.order_products?.map((orderProduct, index) => (
+                <View
+                  key={orderProduct.id}
+                  style={[styles.itemRow, index === order.order_products.length - 1 && styles.lastItemRow]}
+                >
+                  {orderProduct.product.pictures && orderProduct.product.pictures.length > 0 && (
+                    <Image source={{ uri: orderProduct.product.pictures[0].picture }} style={styles.productImage} />
+                  )}
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName}>{orderProduct.product.name}</Text>
+                    <Text style={styles.itemQuantity}>Qty: {orderProduct.quantity}</Text>
+                    <Text style={styles.itemPrice}>
+                      {(parseFloat(orderProduct.unit_price) * orderProduct.quantity).toLocaleString('fr-DZ')} DA
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Order Summary */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Order Summary</Text>
+            <View style={styles.card}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Items Total:</Text>
+                <Text style={styles.summaryValue}>{calculateTotal().toLocaleString('fr-DZ')} DA</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Delivery Fee:</Text>
+                <Text style={styles.summaryValue}>Free</Text>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryTotalLabel}>Total Amount:</Text>
+                <Text style={styles.summaryTotalValue}>{calculateTotal().toLocaleString('fr-DZ')} DA</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
@@ -397,28 +286,38 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
+  header: {
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 60,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
   backButton: {
-    padding: 4,
-    marginRight: 16,
+    padding: 8,
   },
-  headerContent: {
+  headerTitle: {
     flex: 1,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    textAlign: 'center',
+    marginRight: 40, // Compensate for back button width
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 4,
+  headerPlaceholder: {
+    width: 40,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#64748B',
+  content: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    padding: 20,
   },
   loadingText: {
     marginTop: 16,
@@ -430,7 +329,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
     padding: 20,
   },
   errorIcon: {
@@ -449,23 +347,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  header: {
+  orderInfoSection: {
     backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-   
+    margin: 16,
+    borderRadius: 12,
+    padding: 16,
   },
-  orderTitleSection: {
+  orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   orderTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
+    marginBottom: 4,
+  },
+  orderDate: {
+    fontSize: 14,
+    color: '#6B7280',
   },
   statusBadge: {
     flexDirection: 'row',
@@ -483,11 +385,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  orderDate: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 8,
-  },
   validatedBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#D1FAE5',
@@ -500,40 +397,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-  },
-  actionButton: {
+  trackButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
+    justifyContent: 'center',
+    backgroundColor: '#3B82F6',
+    marginHorizontal: 16,
+    marginBottom: 16,
     paddingVertical: 12,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  actionIcon: {
+  trackButtonIcon: {
     fontSize: 16,
     marginRight: 8,
   },
-  actionText: {
-    fontSize: 14,
+  trackButtonText: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#3B82F6',
+    color: '#FFFFFF',
   },
   section: {
-    marginBottom: 20,
-    paddingHorizontal: 20,
+    marginBottom: 16,
+    paddingHorizontal: 16,
   },
   sectionTitle: {
     fontSize: 18,
@@ -541,25 +426,20 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: 12,
   },
-  supplierCard: {
-    flexDirection: 'row',
+  card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+  },
+  supplierRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   supplierImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 16,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
   },
   supplierInfo: {
     flex: 1,
@@ -570,75 +450,46 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: 4,
   },
-  supplierDescription: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
   supplierAddress: {
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
-  infoCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
-    alignItems: 'flex-start',
-  },
-  infoLabel: {
     fontSize: 14,
-    fontWeight: '500',
     color: '#6B7280',
-    width: 80,
   },
-  infoValue: {
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 16,
+  },
+  deliveryInfo: {
+    gap: 4,
+  },
+  deliveryTitle: {
     fontSize: 14,
+    fontWeight: '600',
     color: '#1F2937',
-    flex: 1,
+    marginBottom: 4,
   },
-  itemsContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+  deliveryText: {
+    fontSize: 14,
+    color: '#6B7280',
   },
-  itemCard: {
+  itemRow: {
     flexDirection: 'row',
-    padding: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
-  lastItemCard: {
+  lastItemRow: {
     borderBottomWidth: 0,
   },
   productImage: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     borderRadius: 8,
-    marginRight: 16,
+    marginRight: 12,
   },
   itemInfo: {
     flex: 1,
+    justifyContent: 'space-between',
   },
   itemName: {
     fontSize: 16,
@@ -646,41 +497,15 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: 4,
   },
-  itemDescription: {
+  itemQuantity: {
     fontSize: 14,
     color: '#6B7280',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  itemPricing: {
-    gap: 4,
+    marginBottom: 4,
   },
   itemPrice: {
     fontSize: 14,
-    color: '#3B82F6',
-    fontWeight: '500',
-  },
-  itemQuantity: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  itemTotal: {
-    fontSize: 14,
     fontWeight: '600',
     color: '#059669',
-  },
-  summaryCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -711,49 +536,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#059669',
-  },
-  timelineCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  timelineItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  timelineIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  timelineIconText: {
-    fontSize: 16,
-  },
-  timelineContent: {
-    flex: 1,
-  },
-  timelineTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 2,
-  },
-  timelineDate: {
-    fontSize: 12,
-    color: '#6B7280',
   },
   bottomSpacing: {
     height: 20,
