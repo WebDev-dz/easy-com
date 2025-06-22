@@ -176,7 +176,8 @@ const styles = StyleSheet.create({
     productCard: {
         backgroundColor: '#FFFFFF',
         borderRadius: 16,
-        width: '48%',
+        flex: 1,
+        maxWidth: '100%',
         marginBottom: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },

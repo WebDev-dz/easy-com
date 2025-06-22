@@ -19,6 +19,7 @@ export default function ProfileScreen() {
   const {
     user,
     isLoading,
+    isLoggingOut,
     error,
     logout
   } = useAuth();
@@ -170,7 +171,7 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity disabled={isLoggingOut} style={styles.logoutButton} onPress={handleLogout}>
           <LogOut size={20} color="#DC2626" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>

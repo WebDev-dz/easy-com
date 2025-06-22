@@ -6,6 +6,7 @@ import { Product, Supplier } from '@/services/types'; // Adjust path as needed
 import { useAddToCart } from '@/hooks/cart-hooks'; // Adjust path as needed
 import { alertService } from '@/lib/alert'; // Adjust path as needed
 import { router } from 'expo-router';
+import RenderList from './ui/list';
 
 type Props = {
   isPending: boolean;
@@ -85,8 +86,8 @@ const ProductsGrid = ({
             />
           )}
           numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
           keyExtractor={(item) => item.id.toString()}
+          columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.flatListContent}
         />
@@ -197,6 +198,7 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     paddingBottom: 24,
+    gap: 16,
   },
   columnWrapper: {
     justifyContent: 'space-between',

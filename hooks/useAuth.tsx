@@ -12,6 +12,7 @@ interface AuthState {
   getUser: () => Promise<User | undefined>;
   token: string | null;
   isLoading: boolean;
+  isLoggingOut: boolean;
   error: string | null;
   isAuthenticated: boolean;
   isInitialized: boolean;
@@ -385,7 +386,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Combine loading states
   const combinedIsLoading = isLoading || 
-    isLoggingOut ||
     loginMutation.isPending || 
     registerMutation.isPending || 
     logoutMutation.isPending || 
@@ -397,6 +397,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user: authData?.user || null,
     token: authData?.token || null,
     isLoading: combinedIsLoading,
+    isLoggingOut: logoutMutation.isPending,
     getUser,
     error,
     isAuthenticated: authData?.isAuthenticated || false,

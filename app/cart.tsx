@@ -143,14 +143,15 @@ export default function CartScreen() {
         duration: 200,
         useNativeDriver: true,
       }).start(() => {
-        removeFromCartMutation.mutate({ productId , data : { order_id: orderId } });
+        removeFromCartMutation.mutateAsync({ productId , data : { order_id: orderId } }).then(() => router.push('/cart'));
       });
     });
   };
 
   const clearCart = () => {
-    dialogService.confirmClearCart(() => {
-      clearCartMutation.mutate();
+    dialogService.confirmClearCart(async() => {
+      await clearCartMutation.mutateAsync();
+      router.push('/cart');
     });
   };
 
@@ -199,6 +200,29 @@ export default function CartScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#1E293B" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.title}>Shopping Cart</Text>
+          <Text style={styles.itemCount}>
+            {cartItems.length} item{cartItems.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+        <View style={styles.headerActions}>
+          {cartItems?.length > 0 && (
+            <View>
+              <TouchableOpacity onPress={shareCart} style={styles.headerButton}>
+                <Share2 size={20} color="#6B7280" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={clearCart} style={styles.headerButton}>
+                <Trash2 size={20} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8B5CF6" />
           <Text style={styles.loadingText}>Loading your cart...</Text>
@@ -221,14 +245,14 @@ export default function CartScreen() {
         </View>
         <View style={styles.headerActions}>
           {cartItems?.length > 0 && (
-            <>
+            <View>
               <TouchableOpacity onPress={shareCart} style={styles.headerButton}>
                 <Share2 size={20} color="#6B7280" />
               </TouchableOpacity>
               <TouchableOpacity onPress={clearCart} style={styles.headerButton}>
                 <Trash2 size={20} color="#EF4444" />
               </TouchableOpacity>
-            </>
+            </View>
           )}
         </View>
       </View>

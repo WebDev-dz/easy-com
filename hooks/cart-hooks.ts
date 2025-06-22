@@ -37,9 +37,8 @@ export const useBuyNow = () => {
     return useMutation({
         mutationFn: (data: BuyNowRequest) => cartService.buyNow(data),
         onSuccess: () => {
-            alertService(
+            toastAlert.success(
                 'Order Confirmed!',
-                'Your order has been placed successfully. You will receive a confirmation shortly.',
                 
               );
               router.push('/(tabs)')
@@ -55,7 +54,7 @@ export const useUpdateCart = () => {
     return useMutation({
         mutationFn: (data: UpdateCartRequest) => cartService.updateCart(data),
         onSuccess: () => {
-            toastAlert.success('Cart updated successfully');
+            // toastAlert.success('Cart updated successfully');
         },
         onError: (error) => {
             toastAlert.error('Failed to update cart');
@@ -69,7 +68,7 @@ export const useRemoveFromCart = () => {
         mutationFn: ({ productId, data }: { productId: number; data?: RemoveFromCartRequest }) => 
             cartService.removeFromCart(productId, data),
         onSuccess: () => {
-            toastAlert.success('Product removed from cart');
+            // toastAlert.success('Product removed from cart');
         },
         onError: () => {
             toastAlert.error('Failed to remove product from cart');

@@ -53,42 +53,20 @@ export default function ProductsScreen() {
 
   const filters = useFilters();
 
-  const [currentUserSuppliers, setCurrentUserSuppliers] = useState<Supplier[]>([]);
+  const otherPeoplesProducts = user 
+    ? products.filter(product => {
+        const productSupplier = suppliers.find(s => s.id === product.supplier_id);
+        return productSupplier?.user_id !== user.id;
+      })
+    : products;
 
-  const tabs: TabConfig[] = [
-    {
-      key: 'products',
-      label: 'Products',
-      icon: ({ size, color }) => <Package size={size} color={color} />,
-    },
-    {
-      key: 'suppliers',
-      label: 'Suppliers',
-      icon: ({ size, color }) => <Users size={size} color={color} />,
-    },
-  ];
-
-  // Apply filters and sorting
   const filteredAndSortedProducts = filters.sortedProducts(
-    filters.filteredProducts(
-      products.filter((product: Product) => 
-        !currentUserSuppliers.some((supplier: Supplier) => supplier.id === product.supplier_id)
-      )
-    )
+    filters.filteredProducts(otherPeoplesProducts)
   );
 
   const filteredAndSortedSuppliers = filters.sortedSuppliers(
     filters.filteredSuppliers(suppliers)
   );
-
-  useEffect(() => {
-    if (user && suppliers) {
-      const mySuppliers = suppliers.filter((supplier: Supplier) => supplier.user_id === user.id);
-      setCurrentUserSuppliers(mySuppliers);
-    } else {
-      setCurrentUserSuppliers([]);
-    }
-  }, [suppliers, user]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -132,6 +110,19 @@ export default function ProductsScreen() {
         return { bg: '#F3F4F6', text: '#6B7280' };
     }
   };
+
+  const tabs: TabConfig[] = [
+    {
+      key: 'products',
+      label: 'Products',
+      icon: ({ size, color }) => <Package size={size} color={color} />,
+    },
+    {
+      key: 'suppliers',
+      label: 'Suppliers',
+      icon: ({ size, color }) => <Users size={size} color={color} />,
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>

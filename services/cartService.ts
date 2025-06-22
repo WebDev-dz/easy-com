@@ -79,7 +79,9 @@ export const cartService = {
 
     // Clear Cart
     clearCart: async (): Promise<ClearCartResponse> => {
-        const response = await api.delete<ClearCartResponse>('/orders/cart/clear');
+        const response = await api.delete<ClearCartResponse>('/orders/cart/clear',{
+            headers: await getAuthHeaders()
+        });
         return response.data;
     },
 }; 

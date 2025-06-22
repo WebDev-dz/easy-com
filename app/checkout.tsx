@@ -21,7 +21,7 @@ import { useWilayas, useWilayaCommunes } from '@/hooks/wilaya-hooks';
 import { alertService } from '@/lib/alert';
 import { Wilaya, Commune } from '@/services/types';
 import { useAuth } from '@/hooks/useAuth';
-import { useGetCart, useValidateCart } from '@/hooks/cart-hooks';
+import { useClearCart, useGetCart, useValidateCart } from '@/hooks/cart-hooks';
 import { OrderProduct } from '@/services/types';
 import { API_URL } from '@/services/api';
 import { toastAlert } from '@/lib/toastAlert';
@@ -40,6 +40,7 @@ export default function CheckoutScreen() {
   // Get cart data
   const { data: cartData, isLoading: isLoadingCart, error: cartError } = useGetCart();
   const { mutate: validateCartMutation, isPending: isValidating } = useValidateCart();
+  const { mutate: clearCartMutation } = useClearCart();
 
   // Get user data
   const { user, isLoading: isLoadingUser } = useAuth();
@@ -125,8 +126,9 @@ export default function CheckoutScreen() {
         onSuccess: () => {
           toastAlert.success(
             'Order Confirmed!',
-            
           );
+          clearCartMutation();
+          router.push('/products');
         },
         onError: (error) => {
           toastAlert.error('Failed to place order' + error.message);

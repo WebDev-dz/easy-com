@@ -16,9 +16,7 @@ export default function TabLayout() {
   }, [user, isLoading, segments]);
 
   // Show nothing while checking auth status
-  if (isLoading) {
-    return null;
-  }
+  
 
   // Only show tabs if user is logged in
   if (user) {

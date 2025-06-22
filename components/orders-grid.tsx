@@ -3,6 +3,7 @@ import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Animated, St
 import { Package, AlertCircle, RefreshCcw } from 'lucide-react-native';
 import { SupplierOrderCard } from './supplier-order'; // Adjust path as needed
 import { SupplierOrder } from '@/services/types';
+import RenderList from './ui/list';
 
 type Props = {
   isPending: boolean;
@@ -65,7 +66,7 @@ export const OrdersGrid = ({
           </TouchableOpacity>
         </Animated.View>
       ) : (
-        <FlatList
+        <RenderList
           data={orders}
           renderItem={({ item }) => (
             <SupplierOrderCard
